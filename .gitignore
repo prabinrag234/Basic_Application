@@ -2,3 +2,4 @@ bin/
 .vs/
 obj/
 EShopNative.csproj.user
+eshop.keystore.b64
