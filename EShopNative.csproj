@@ -15,8 +15,13 @@
     <!-- App Info -->
     <ApplicationTitle>EShopNative</ApplicationTitle>
     <ApplicationId>com.companyname.eshopnative</ApplicationId>
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>0.1</ApplicationDisplayVersion>
+	  
+	<WindowsPackageVersion>1.0.1</WindowsPackageVersion>
+	  
+	<CFBundleShortVersionString>0.1</CFBundleShortVersionString>
+	<CFBundleVersion>1</CFBundleVersion>
 
     <!-- Windows -->
     <WindowsPackageType>None</WindowsPackageType>
@@ -76,6 +81,7 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="CommunityToolkit.Maui" Version="13.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.2" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.30" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.2" />
@@ -84,12 +90,20 @@
   <!-- ===========================       XAML COMPILATION       =========================== -->
   <ItemGroup>
     <MauiXaml Update="Pages\HomePage.xaml"><Generator>MSBuild:Compile</Generator></MauiXaml>
+    <MauiXaml Update="Pages\RegisterPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="Pages\UserRoleEntry.xaml"><Generator>MSBuild:Compile</Generator></MauiXaml>
-    <MauiXaml Update="Views\CustomerRegistrationView.xaml"><Generator>MSBuild:Compile</Generator></MauiXaml>
-    <MauiXaml Update="Views\CustomNavBar.xaml"><Generator>MSBuild:Compile</Generator></MauiXaml>
-    <MauiXaml Update="Views\LoginView.xaml"><Generator>MSBuild:Compile</Generator></MauiXaml>
-    <MauiXaml Update="Views\SellerRegistrationView.xaml"><Generator>MSBuild:Compile</Generator></MauiXaml>
-    <MauiXaml Update="Views\WelcomePage.xaml"><Generator>MSBuild:Compile</Generator></MauiXaml>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Converters\" />
+    <Folder Include="Enums\" />
+    <Folder Include="Views\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Pages\RegisterPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
   </ItemGroup>
 
 </Project>

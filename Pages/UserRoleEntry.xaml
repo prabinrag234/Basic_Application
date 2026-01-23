@@ -3,16 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EShopNative.Pages.UserRoleEntry"
              BackgroundColor="{StaticResource AppDarkBackgroundColor}"
-             xmlns:converters="clr-namespace:EShopNative.Converters"
-             xmlns:views="clr-namespace:EShopNative.Views"
              NavigationPage.HasNavigationBar="False">
-    <ContentPage.Resources>
-        <converters:EnumToVisibilityConverter x:Key="EnumToBoolConverter" />
-    </ContentPage.Resources>
-    <Grid>
-        <views:WelcomePage IsVisible="{Binding CurrentView, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Welcome}" BindingContext="{Binding}"/>
-        <views:LoginView IsVisible="{Binding CurrentView, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Login}" BindingContext="{Binding}"/>
-        <views:CustomerRegistrationView IsVisible="{Binding CurrentView, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=CustomerRegistration}" BindingContext="{Binding}"/>
-        <views:SellerRegistrationView IsVisible="{Binding CurrentView, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=SellerRegistration}" BindingContext="{Binding}"/>
-    </Grid>
+    <VerticalStackLayout Padding="30">
+        <Entry Placeholder="Email" Text="{Binding Email}" />
+        <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
+        <Button Text="Login" Command="{Binding LoginCommand}" />
+        <Button Text="Register" Command="{Binding GoToRegisterCommand}" />
+    </VerticalStackLayout>
 </ContentPage>

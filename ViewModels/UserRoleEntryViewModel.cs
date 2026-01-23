@@ -1,184 +1,73 @@
-﻿using CommunityToolkit.Maui.Alerts;
-using CommunityToolkit.Maui.Core;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using EShopNative.BaseLibrary;
 using EShopNative.DataTransferObject;
-using EShopNative.Enums;
+using EShopNative.Helper;
 using EShopNative.Pages;
 using EShopNative.Services;
-using System.Text.RegularExpressions;
-using System.Windows.Input;
-using static EShopNative.Services.AuthService;
 
 namespace EShopNative.ViewModels
 {
     public partial class UserRoleEntryViewModel : BaseViewModel
     {
-        private readonly AuthService _authService;
+        private readonly AuthService _auth;
+        private readonly IServiceProvider _services;
 
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public string ConfirmPassword { get; set; }
-
-        private AppViewState _currentView;
-        public AppViewState CurrentView
+        private string _email = string.Empty;
+        public string Email
         {
-            get => _currentView;
-            set
-            {
-                if (_currentView != value)
-                {
-                    _currentView = value;
-                    OnPropertyChanged(); // must notify UI
-                }
-            }
+            get => _email;
+            set => SetProperty(ref _email, value);
         }
 
-        public ICommand NavigateToRegistrationCommand { get; }
-        public ICommand NavigateToLoginCommand { get; }
-        public ICommand LoginCommand { get; }
-        public ICommand RegistrationCommand { get; }
-
-
-        public UserRoleEntryViewModel(AuthService authService)
+        private string _password = string.Empty;
+        public string Password
         {
-            _authService = authService;
-
-
-            CurrentView = AppViewState.Welcome;
-            NavigateToRegistrationCommand = new Command(NavigateToRegistration);
-            NavigateToLoginCommand = new Command<string>(async (role) => await NavigateToLogin(role));
-            LoginCommand = new Command(async () => await UserLogin(Email, Password));
-            RegistrationCommand = new Command(async () => await UserSignUP(Name, Email, Password, ConfirmPassword));
+            get => _password;
+            set => SetProperty(ref _password, value);
         }
 
-        private void NavigateToRegistration()
+        public UserRoleEntryViewModel(AuthService auth, IServiceProvider services)
         {
-            var role = Preferences.Get("UserRole", "Guest");
-
-            if (role.Equals("Seller"))
-                CurrentView = AppViewState.SellerRegistration;
-            else
-                CurrentView = AppViewState.CustomerRegistration;
+            _auth = auth;
+            _services = services;
         }
-        private async Task NavigateToLogin(string role)
-        {
-            if (role.ToString() == "Customer" || role.ToString() == "Seller")
-            {
-                bool confirm = await Application.Current.MainPage.
-                DisplayAlert("Confirm Role", $"You selected '{role}' as your role. Do you want to proceed?", "Yes", "No");
-                if (confirm)
-                {
-                    Preferences.Set("UserRole", role);
-                    CurrentView = AppViewState.Login;
-                }
-            }
-            else if (role.ToString() == "SellerLogin" || role.ToString() == "CustomerLogin")
-            {
-                CurrentView = AppViewState.Login;
-            }
 
-        }
-        private async Task UserLogin(string email, string password)
+        [RelayCommand]
+        public async Task Login()
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            var result = await _auth.Login(new LoginRequest
             {
-                await Application.Current.MainPage.DisplayAlert("Error", "Email and password are required", "OK");
+                Email = _email,
+                Password = _password
+            });
+
+            if (result == null)
+            {
+                await WindowHelper.GetCurrentPage().DisplayAlertAsync("Error", "Invalid login", "OK");
                 return;
             }
 
-            var request = new LoginRequest
+            if (!string.IsNullOrEmpty(result.AccessToken))
             {
-                Username = email,
-                Password = password
-            };
-
-            var (isSuccess, message, user) = await _authService.LoginAsync(request);
-
-            if (!isSuccess)
-            {
-                await Application.Current.MainPage.DisplayAlert("Login Failed", message, "OK");
-                return;
+                await SecureStorage.SetAsync("AccessToken", result.AccessToken);
             }
-            else
-            {
-                // Success
-                await Application.Current.MainPage.DisplayAlert("Success", "Login successful", "OK");
 
-                // Navigate to next page
-                await Application.Current.MainPage.Navigation.PushAsync(new HomePage());
-            }   
+            if (!string.IsNullOrEmpty(result.RefreshToken))
+            {
+                await SecureStorage.SetAsync("RefreshToken", result.RefreshToken);
+            }
+
+
+            var homePage = _services.GetRequiredService<HomePage>();
+            await WindowHelper.GetCurrentPage().Navigation.PushAsync(homePage);
         }
 
-
-        public async Task UserSignUP(string name, string email, string password, string confirmPassword)
+        [RelayCommand]
+        public async Task GoToRegister()
         {
-            try
-            {
-                // Step 0: Check if all fields are filled
-                if (string.IsNullOrWhiteSpace(name) ||
-                    string.IsNullOrWhiteSpace(email) ||
-                    string.IsNullOrWhiteSpace(password) ||
-                    string.IsNullOrWhiteSpace(confirmPassword))
-                {
-                    await Toast.Make("Please fill in all fields.", ToastDuration.Short).Show();
-                    return;
-                }
-
-                // Step 1b: Validate password strength
-                if (password.Length < 6)
-                {
-                    await Toast.Make("Password must be at least 6 characters.", ToastDuration.Short).Show();
-                    return;
-                }
-
-                // Step 1c: Validate email format
-                var emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-                if (!Regex.IsMatch(email, emailPattern))
-                {
-                    await Toast.Make("Invalid email format.", ToastDuration.Short).Show();
-                    return;
-                }
-
-                // Step 2: Confirm password
-                if (password != confirmPassword)
-                {
-                    await Toast.Make("Passwords do not match.", ToastDuration.Short).Show();
-                    return;
-                }
-
-                var request = new RegisterRequest
-                {
-                    Username = email,
-                    Email = email,
-                    Password = password,
-                    FullName = name,
-                };
-
-                var response = await _authService.RegisterAsync(request);
-
-                // NEW: Handle backend validation errors
-                if (response.Errors != null && response.Errors.Any())
-                {
-                    string errorMessage = string.Join("\n", response.Errors);
-                    await Toast.Make(errorMessage, ToastDuration.Long).Show();
-                    return;
-                }
-
-                // NEW: Handle success message
-                if (response.Message == "Registration successful")
-                {
-                    await Toast.Make("Registration successful!", ToastDuration.Short).Show();
-                    await Application.Current.MainPage.Navigation.PushAsync(new HomePage());
-                }
-
-                // Fallback
-                await Toast.Make("Unexpected response from server.", ToastDuration.Short).Show();
-            }
-            catch (Exception ex)
-            {
-                await Toast.Make($"Registration failed: {ex.Message}", ToastDuration.Long).Show();
-            }
+            var registerPage = _services.GetRequiredService<RegisterPage>();
+            await WindowHelper.GetCurrentPage().Navigation.PushAsync(registerPage);
         }
     }
-}
+}           

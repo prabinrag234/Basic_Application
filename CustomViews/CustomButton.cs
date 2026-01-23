@@ -6,7 +6,7 @@ namespace EShopNative.CustomViews
     {
         private readonly CustomButtonDrawable _drawable;
 
-        public static readonly BindableProperty BackgroundColorProperty =
+        public static readonly BindableProperty CustomBackgroundColorProperty =
             BindableProperty.Create(nameof(BackgroundColor), typeof(Color), typeof(CustomButton), Colors.Yellow, propertyChanged: OnVisualPropertyChanged);
 
         public static readonly BindableProperty BorderColorProperty =
@@ -31,10 +31,10 @@ namespace EShopNative.CustomViews
             BindableProperty.Create(nameof(CommandParameter), typeof(object), typeof(CustomButton), null);
 
 
-        public Color BackgroundColor
+        public new Color BackgroundColor
         {
-            get => (Color)GetValue(BackgroundColorProperty);
-            set => SetValue(BackgroundColorProperty, value);
+            get => (Color)GetValue(CustomBackgroundColorProperty);
+            set => SetValue(CustomBackgroundColorProperty, value);
         }
 
         public Color BorderColor
@@ -79,7 +79,7 @@ namespace EShopNative.CustomViews
             set => SetValue(TextColorProperty, value);
         }
 
-        public event EventHandler Clicked;
+        public event EventHandler? Clicked;
 
         public CustomButton()
         {
