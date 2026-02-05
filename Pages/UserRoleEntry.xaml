@@ -3,11 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EShopNative.Pages.UserRoleEntry"
              BackgroundColor="{StaticResource AppDarkBackgroundColor}"
-             NavigationPage.HasNavigationBar="False">
-    <VerticalStackLayout Padding="30">
-        <Entry Placeholder="Email" Text="{Binding Email}" />
-        <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
-        <Button Text="Login" Command="{Binding LoginCommand}" />
-        <Button Text="Register" Command="{Binding GoToRegisterCommand}" />
-    </VerticalStackLayout>
+             NavigationPage.HasNavigationBar="False"
+             xmlns:views="clr-namespace:EShopNative.CustomViews">
+    <Grid Padding="30">
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Login" FontSize="28" HorizontalOptions="Center" />
+            <Entry Placeholder="Email" Text="{Binding Email}" />
+            <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
+            <Button Text="Login" Command="{Binding LoginCommand}" />
+        </VerticalStackLayout>
+
+        <views:LoadingOverlay />
+    </Grid>
 </ContentPage>
