@@ -9,10 +9,8 @@ namespace EShopNative.DataTransferObject
 
         [JsonPropertyName("refresh_token")]
         public string RefreshToken { get; set; } = string.Empty;
-
         public UserDTO ?User { get; set; }
     }
-
 
     public class RegisterRequest
     {
