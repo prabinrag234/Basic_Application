@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using EShop;
 using EShopNative.BaseLibrary;
 using EShopNative.Interfaces;
 using EShopNative.Pages;
@@ -12,24 +13,22 @@ namespace EShopNative.ViewModels
     {
         private readonly AuthService _auth;
         private readonly IServiceProvider _services;
-        private readonly INavigationService _nav;
         private readonly IAlertService _alert;
         private readonly ISessionManager _session;
 
         [ObservableProperty]
         private string userName;
 
-        public HomePageViewModel(AuthService auth, 
-                                 IServiceProvider services, 
-                                 INavigationService nav, 
-                                 IAlertService alert,
-                                 ISessionManager session)
+        public HomePageViewModel(
+            AuthService auth,
+            IServiceProvider services,
+            IAlertService alert,
+            ISessionManager session)
         {
             _auth = auth;
             _services = services;
-            _session = session;
-            _nav = nav;
             _alert = alert;
+            _session = session;
 
             userName = session.CurrentUser?.Email ?? "User";
         }
@@ -44,10 +43,15 @@ namespace EShopNative.ViewModels
             {
                 IsBusy = true;
 
+                // Call API logout
+                await _auth.LogoutAsync();
+
+                // Clear local session
                 await _session.ClearSessionAsync();
 
+                // Reset root navigation
                 var loginPage = _services.GetRequiredService<UserRoleEntry>();
-                await _nav.SetRootPage(loginPage);
+                App.Current.MainPage = new NavigationPage(loginPage);
 
                 await _alert.ShowSuccess("Logged out successfully");
             }
@@ -56,6 +60,5 @@ namespace EShopNative.ViewModels
                 IsBusy = false;
             }
         }
-
     }
 }

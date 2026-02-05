@@ -51,17 +51,12 @@ namespace EShop
                 var session = _services.GetRequiredService<ISessionManager>();
                 await session.LoadSessionAsync();
 
+                var auth = _services.GetRequiredService<AuthService>();
                 Page startPage;
 
                 if (!string.IsNullOrEmpty(session.RefreshToken))
                 {
-                    var auth = _services.GetRequiredService<AuthService>();
-                    var refreshed = await auth.Refresh(session.RefreshToken);
-
-                    if (refreshed == null)
-                    {
-                        Console.WriteLine("REFRESH FAILED");
-                    }
+                    var refreshed = await auth.RefreshAsync(session.RefreshToken);
 
                     if (refreshed is { User: not null })
                     {
@@ -70,6 +65,8 @@ namespace EShop
                             refreshed.RefreshToken,
                             refreshed.User
                         );
+
+                        auth.AttachToken(); // IMPORTANT
 
                         startPage = _services.GetRequiredService<HomePage>();
                     }
@@ -81,20 +78,18 @@ namespace EShop
                 }
                 else
                 {
+                    auth.AttachToken(); // IMPORTANT
                     startPage = _services.GetRequiredService<UserRoleEntry>();
                 }
 
                 window.Page = new NavigationPage(startPage);
             }
-            catch (Exception ex)
+            catch
             {
-                // Fallback to login page on error
                 var fallback = _services.GetRequiredService<UserRoleEntry>();
                 window.Page = new NavigationPage(fallback);
             }
         }
-
-
         private void AttachGlobalInputHandlers(Window window)
         {
 #if ANDROID

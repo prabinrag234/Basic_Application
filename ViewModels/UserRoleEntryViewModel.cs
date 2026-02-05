@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using EShop;
 using EShopNative.BaseLibrary;
 using EShopNative.DataTransferObject;
 using EShopNative.Interfaces;
@@ -10,35 +11,21 @@ namespace EShopNative.ViewModels
     public partial class UserRoleEntryViewModel : BaseViewModel
     {
         private readonly AuthService _auth;
-        private readonly IServiceProvider _services; 
-        private readonly INavigationService _nav;
+        private readonly IServiceProvider _services;
         private readonly IAlertService _alert;
         private readonly ISessionManager _session;
 
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
 
-        private string _email = string.Empty;
-        public string Email
-        {
-            get => _email;
-            set => SetProperty(ref _email, value);
-        }
-
-        private string _password = string.Empty;
-        public string Password
-        {
-            get => _password;
-            set => SetProperty(ref _password, value);
-        }
-
-        public UserRoleEntryViewModel(AuthService auth,
-                                      IServiceProvider services, 
-                                      INavigationService nav, 
-                                      IAlertService alert,
-                                      ISessionManager session)
+        public UserRoleEntryViewModel(
+            AuthService auth,
+            IServiceProvider services,
+            IAlertService alert,
+            ISessionManager session)
         {
             _auth = auth;
             _services = services;
-            _nav = nav; 
             _alert = alert;
             _session = session;
         }
@@ -53,10 +40,16 @@ namespace EShopNative.ViewModels
             {
                 IsBusy = true;
 
+                if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+                {
+                    await _alert.ShowError("Email and password are required");
+                    return;
+                }
+
                 var result = await _auth.Login(new LoginRequest
                 {
-                    Email = _email,
-                    Password = _password
+                    Email = Email,
+                    Password = Password
                 });
 
                 if (result == null)
@@ -71,14 +64,19 @@ namespace EShopNative.ViewModels
                     return;
                 }
 
+                // Save session
                 await _session.SaveSessionAsync(
                     result.AccessToken,
                     result.RefreshToken,
                     result.User
                 );
 
+                // Attach token for all future API calls
+                _auth.AttachToken();
+
+                // Reset root navigation to HomePage
                 var homePage = _services.GetRequiredService<HomePage>();
-                await _nav.PushAsync(homePage);
+                App.Current.MainPage = new NavigationPage(homePage);
             }
             finally
             {
@@ -90,9 +88,7 @@ namespace EShopNative.ViewModels
         public async Task GoToRegister()
         {
             var registerPage = _services.GetRequiredService<RegisterPage>();
-            await _nav.PushAsync(registerPage);
+            App.Current.MainPage = new NavigationPage(registerPage);
         }
-
-
     }
-}           
+}
