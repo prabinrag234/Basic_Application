@@ -11,21 +11,25 @@ namespace EShopNative.Services
         public string? RefreshToken { get; private set; }
         public UserDTO? CurrentUser { get; private set; }
 
+        private const string AccessTokenKey = "access_token";
+        private const string RefreshTokenKey = "refresh_token";
+        private const string UserKey = "user";
+
         public async Task LoadSessionAsync()
         {
-            AccessToken = await SecureStorage.GetAsync("access_token");
-            RefreshToken = await SecureStorage.GetAsync("refresh_token");
+            AccessToken = await SecureStorage.GetAsync(AccessTokenKey);
+            RefreshToken = await SecureStorage.GetAsync(RefreshTokenKey);
 
-            var userJson = await SecureStorage.GetAsync("user");
+            var userJson = await SecureStorage.GetAsync(UserKey);
             if (!string.IsNullOrEmpty(userJson))
                 CurrentUser = JsonSerializer.Deserialize<UserDTO>(userJson);
         }
 
         public async Task SaveSessionAsync(string accessToken, string refreshToken, UserDTO user)
         {
-            await SecureStorage.SetAsync("access_token", accessToken);
-            await SecureStorage.SetAsync("refresh_token", refreshToken);
-            await SecureStorage.SetAsync("user", JsonSerializer.Serialize(user));
+            await SecureStorage.SetAsync(AccessTokenKey, accessToken);
+            await SecureStorage.SetAsync(RefreshTokenKey, refreshToken);
+            await SecureStorage.SetAsync(UserKey, JsonSerializer.Serialize(user));
 
             AccessToken = accessToken;
             RefreshToken = refreshToken;
@@ -38,9 +42,9 @@ namespace EShopNative.Services
             RefreshToken = null;
             CurrentUser = null;
 
-            SecureStorage.Remove("AccessToken");
-            SecureStorage.Remove("RefreshToken");
-            SecureStorage.Remove("CurrentUser");
+            SecureStorage.Remove(AccessTokenKey);
+            SecureStorage.Remove(RefreshTokenKey);
+            SecureStorage.Remove(UserKey);
 
             await Task.CompletedTask;
         }
