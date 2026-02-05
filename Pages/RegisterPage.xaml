@@ -2,11 +2,33 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EShopNative.Pages.RegisterPage"
-             Title="RegisterPage">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
-    </VerticalStackLayout>
+             BackgroundColor="{StaticResource AppDarkBackgroundColor}"
+             NavigationPage.HasNavigationBar="False"
+             xmlns:views="clr-namespace:EShopNative.CustomViews">
+    <Grid>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <Label Text="Register"
+                   FontSize="28"
+                   HorizontalOptions="Center" />
+
+            <Entry Placeholder="Email"
+                   Text="{Binding Email}" />
+
+            <Entry Placeholder="Password"
+                   IsPassword="True"
+                   Text="{Binding Password}" />
+
+            <Entry Placeholder="Confirm Password"
+                   IsPassword="True"
+                   Text="{Binding ConfirmPassword}" />
+
+            <Button Text="Create Account"
+                    Command="{Binding RegisterCommand}"
+                    IsEnabled="{Binding IsNotBusy}" />
+
+        </VerticalStackLayout>
+
+        <views:LoadingOverlay />
+    </Grid>
 </ContentPage>

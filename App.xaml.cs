@@ -1,4 +1,5 @@
-﻿using EShopNative.Pages;
+﻿using EShopNative.Interfaces;
+using EShopNative.Pages;
 using EShopNative.Services;
 
 namespace EShop
@@ -15,7 +16,7 @@ namespace EShop
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            // Temporary loading screen while we check authentication
+            // Temporary loading screen
             var loadingPage = new ContentPage
             {
                 Content = new ActivityIndicator
@@ -28,7 +29,16 @@ namespace EShop
 
             var window = new Window(new NavigationPage(loadingPage));
 
-            // Run async login check AFTER window is created
+            // Attach global input handlers once the window is ready
+            window.HandlerChanged += (s, e) =>
+            {
+                if (window.Handler?.PlatformView is not null)
+                {
+                    AttachGlobalInputHandlers(window);
+                }
+            };
+
+            // Run async session check AFTER window is created
             _ = InitializeApp(window);
 
             return window;
@@ -36,35 +46,98 @@ namespace EShop
 
         private async Task InitializeApp(Window window)
         {
-            var refreshToken = await SecureStorage.GetAsync("RefreshToken");
-
-            Page startPage;
-                
-            if (!string.IsNullOrEmpty(refreshToken))
+            try
             {
-                var authService = _services.GetRequiredService<AuthService>();
-                var result = await authService.Refresh(refreshToken);
+                var session = _services.GetRequiredService<ISessionManager>();
+                await session.LoadSessionAsync();
 
-                if (result != null)
+                var auth = _services.GetRequiredService<AuthService>();
+                Page startPage;
+
+                if (!string.IsNullOrEmpty(session.RefreshToken))
                 {
-                    if (!string.IsNullOrEmpty(result.AccessToken))
+                    var refreshed = await auth.RefreshAsync(session.RefreshToken);
+
+                    if (refreshed is { User: not null })
                     {
-                        await SecureStorage.SetAsync("AccessToken", result.AccessToken);
+                        await session.SaveSessionAsync(
+                            refreshed.AccessToken,
+                            refreshed.RefreshToken,
+                            refreshed.User
+                        );
+
+                        auth.AttachToken(); // IMPORTANT
+
+                        startPage = _services.GetRequiredService<HomePage>();
                     }
-                    startPage = _services.GetRequiredService<HomePage>();
+                    else
+                    {
+                        await session.ClearSessionAsync();
+                        startPage = _services.GetRequiredService<UserRoleEntry>();
+                    }
                 }
                 else
                 {
+                    auth.AttachToken(); // IMPORTANT
                     startPage = _services.GetRequiredService<UserRoleEntry>();
                 }
-            }
-            else
-            {
-                startPage = _services.GetRequiredService<UserRoleEntry>();
-            }
 
-            // Update the active window’s root page (correct for .NET 10)
-            window.Page = new NavigationPage(startPage);
+                window.Page = new NavigationPage(startPage);
+            }
+            catch
+            {
+                var fallback = _services.GetRequiredService<UserRoleEntry>();
+                window.Page = new NavigationPage(fallback);
+            }
         }
+        private void AttachGlobalInputHandlers(Window window)
+        {
+#if ANDROID
+            if (window.Handler?.PlatformView is Android.Views.View view)
+            {
+                view.Touch += (s, e) =>
+                {
+                    var idle = IPlatformApplication.Current?.Services?.GetService<IdleTimeoutService>();
+                    idle?.ResetTimer();
+                };
+            }
+#endif
+
+#if IOS
+    if (window.Handler?.PlatformView is UIKit.UIView uiView)
+    {
+        var gesture = new UIKit.UITapGestureRecognizer(() =>
+        {
+            var idle = IPlatformApplication.Current?.Services?.GetRequiredService<IdleTimeoutService>();
+            idle?.ResetTimer();
+        });
+
+        uiView.AddGestureRecognizer(gesture);
+    }
+#endif
+
+#if WINDOWS
+if (window.Handler?.PlatformView is Microsoft.UI.Xaml.Window win)
+{
+    var root = win.Content as Microsoft.UI.Xaml.FrameworkElement;
+
+    if (root != null)
+    {
+        root.PointerPressed += (s, e) =>
+        {
+            var idle = IPlatformApplication.Current?.Services?.GetService<IdleTimeoutService>();
+            idle?.ResetTimer();
+        };
+
+        root.PointerMoved += (s, e) =>
+        {
+            var idle = IPlatformApplication.Current?.Services?.GetService<IdleTimeoutService>();
+            idle?.ResetTimer();
+        };
+    }
+}
+#endif
+        }
+
     }
 }

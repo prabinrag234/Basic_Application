@@ -3,8 +3,22 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="EShopNative.Pages.HomePage"
              BackgroundColor="{StaticResource AppDarkBackgroundColor}"
-             NavigationPage.HasNavigationBar="False">
-    <VerticalStackLayout>
-        <Label Text="hello"/>
-    </VerticalStackLayout>
+             NavigationPage.HasNavigationBar="False"
+             xmlns:views="clr-namespace:EShopNative.CustomViews">
+    <Grid>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <Label Text="Welcome!" FontSize="28" HorizontalOptions="Center" />
+            <Label Text="{Binding UserName}" FontSize="20" HorizontalOptions="Center" />
+
+            <Button Text="Logout"
+                    BackgroundColor="Red"
+                    TextColor="White"
+                    Command="{Binding LogoutCommand}"
+                    IsEnabled="{Binding IsNotBusy}" />
+
+        </VerticalStackLayout>
+
+        <views:LoadingOverlay />
+    </Grid>
 </ContentPage>
